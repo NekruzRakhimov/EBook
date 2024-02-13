@@ -2,7 +2,7 @@ from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from connection import engine
-from models import Books, Authors, Genres, Readers, BorrowedBooks, BooksGenres, BooksAuthors, Orders, OrderItems
+from models import Books, Authors, Genres, Readers, BorrowedBooks, BooksGenres, BooksAuthors, Orders, OrderItems, Staff
 from datetime import datetime
 
 Session = sessionmaker(autoflush=False, bind=engine)
@@ -346,9 +346,9 @@ def get_reader_activity(_reader_id):
             return None, 404
         borrowed_books = (
             db.query(BorrowedBooks)
-            .join(Books)
-            .filter(BorrowedBooks.reader_id == _reader_id)
-            .all()
+                .join(Books)
+                .filter(BorrowedBooks.reader_id == _reader_id)
+                .all()
         )
         activity = []
         for borrowed_book in borrowed_books:
@@ -389,3 +389,87 @@ def update_order_status(order_id, status):
             db.commit()
             return True
         return False
+
+
+def add_staff(_staff_data):
+    with Session(autoflush=False, bind=engine) as db:
+        staff = Staff(**_staff_data)
+        db.add(staff)
+        db.commit()
+        if staff:
+            return True
+        else:
+            return False
+
+
+# new_staff = {
+#     "name": "Marlon Brando",
+#     "role": "maker",
+#     "access_level": 2
+# }
+
+
+def update_staff_new_role(_id, _new_role):
+    with Session(autoflush=False, bind=engine) as db:
+        staff = db.query(Staff).filter_by(id=_id).first()
+        if staff:
+            staff.role = _new_role
+            db.commit()
+            return True
+        return False
+
+
+def update_staff_new_access_level(_id):
+    with Session(autoflush=False, bind=engine) as db:
+        staff = db.query(Staff).filter_by(id=_id).first()
+        if staff:
+            staff.access_level += 1
+            db.commit()
+            return True
+        return False
+
+
+def delete_staff(_id):
+    with Session(autoflush=False, bind=engine) as db:
+        staff = db.query(Staff).filter_by(id=_id).first()
+        if staff:
+            staff.is_deleted = True
+            db.commit()
+            return {"message": "Работник успешно удален"}
+        else:
+            return {"error": "Работник не найден"}
+
+
+def get_staff_all():
+    with Session(autoflush=False, bind=engine) as db:
+        staff_seek = db.query(Staff).all()
+        if staff_seek:
+            list_staff_data = []
+            for staff in staff_seek:
+                staff_data = {
+                    'id': staff.id,
+                    'name': staff.name,
+                    'role': staff.role,
+                    'access_level': staff.access_level,
+                    'is_deleted': staff.is_deleted
+                }
+                list_staff_data.append(staff_data)
+            return list_staff_data
+        else:
+            return None
+
+
+def get_staff(_id):
+    with Session(autoflush=False, bind=engine) as db:
+        staff = db.query(Staff).filter_by(id=_id).first()
+        if staff:
+            staff_by_id = {
+                'id': staff.id,
+                'name': staff.name,
+                'role': staff.role,
+                'access_level': staff.access_level,
+                'is_deleted': staff.is_deleted
+            }
+            return staff_by_id
+        else:
+            return False

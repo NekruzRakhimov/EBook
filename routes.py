@@ -1,8 +1,9 @@
 from flask import jsonify, Blueprint, request, make_response
 import repository
 from connection import engine
-from models import Readers, Books
+from models import Readers, Books, User
 from sqlalchemy.orm import sessionmaker
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 
 app = Blueprint('routes', __name__)
 
@@ -16,6 +17,32 @@ def index():
 
 
 # ======================================= РАБОТАЕТ ==================================
+
+@app.route('/auth/sign-up', methods=["POST"])
+def sign_up():
+    data = request.get_json()
+    u = User(full_name=data["full_name"], username=data["username"], password=data["password"])
+    err = service.create_user(u)
+    if err is not None:
+        return {"message": err}, 400
+
+    return {"status": "successfully registered"}, 201
+
+
+@app.route('/auth/sign-in', methods=["POST"])
+def sign_in():
+    data = request.get_json()
+    username = data["username"]
+    password = data["password"]
+    user_id, err = service.get_user(username, password)
+    if err is not None:
+        return {"error": err}, 401
+
+    additional_claims = {"role": "admin"}
+    access_token = create_access_token(identity=user_id,
+                                       additional_claims=additional_claims)
+    return jsonify(access_token=access_token), 200
+
 
 # === УПРАВЛЕНИЕ КНИГАМИ ===
 

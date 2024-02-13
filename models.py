@@ -116,6 +116,15 @@ class Staff(Base):
     name = Column(String(length=70), nullable=False)
     role = Column(String(length=32), nullable=False)
     access_level = Column(Integer, nullable=False)
+    is_deleted = Column(Boolean, nullable=False, default=False)
+
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String)
+    username = Column(String, unique=True)
+    password = Column(String)
 
 
 Base.metadata.create_all(bind=engine)

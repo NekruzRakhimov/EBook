@@ -1,5 +1,6 @@
 from flask import jsonify, Blueprint, request, make_response
 import repository
+from EBook import service
 from connection import engine
 from models import Readers, Books, User
 from sqlalchemy.orm import sessionmaker

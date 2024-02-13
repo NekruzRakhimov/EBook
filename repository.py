@@ -1,8 +1,9 @@
 from sqlalchemy import and_
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 from connection import engine
-from models import Books, Authors, Genres, Readers, BorrowedBooks, BooksGenres, BooksAuthors, Orders, OrderItems, Staff
+from models import Books, Authors, Genres, Readers, BorrowedBooks, BooksGenres, BooksAuthors, Orders, OrderItems, Staff, \
+    User
 from datetime import datetime
 
 Session = sessionmaker(autoflush=False, bind=engine)
@@ -402,13 +403,6 @@ def add_staff(_staff_data):
             return False
 
 
-# new_staff = {
-#     "name": "Marlon Brando",
-#     "role": "maker",
-#     "access_level": 2
-# }
-
-
 def update_staff_new_role(_id, _new_role):
     with Session(autoflush=False, bind=engine) as db:
         staff = db.query(Staff).filter_by(id=_id).first()
@@ -473,3 +467,32 @@ def get_staff(_id):
             return staff_by_id
         else:
             return False
+
+
+def create_user(user):
+    try:
+        with Session(autoflush=False, bind=engine) as db:
+            db.add(user)
+            db.commit()
+    except SQLAlchemyError as e:
+        # Обработка ошибки
+        print(f"Error creating user: {e}")
+        # Откат транзакции в случае ошибки
+        db.rollback()
+        # Дополнительные действия в зависимости от вашего кейса
+        # Например, можно возвращать сообщение об ошибке или выбрасывать исключение
+        return f"Error creating user: {e}"
+
+
+def get_user(username, password):
+    try:
+        with Session(autoflush=False, bind=engine) as db:
+            # Получение пользователя по имени пользователя и паролю
+            user = db.query(User).filter(and_(User.username == username, User.password == password)).first()
+
+        return user
+    except SQLAlchemyError as e:
+        # Обработка ошибки
+        print(f"Error getting user: {e}")
+        # Возвращаем None в случае ошибки
+        return None
